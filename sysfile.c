@@ -4,6 +4,10 @@
 // user code, and calls into file.c and fs.c.
 //
 
+#define SEEK_SET    0   /* set file offset to offset */
+#define SEEK_CUR    1   /* set file offset to current plus offset */
+#define SEEK_END    2   /* set file offset to EOF plus offset */
+
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -15,6 +19,45 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+
+int sys_lseek(void){
+    int fd;
+    int off, final_off;
+    int whence;
+    struct file *f;
+
+    if(argfd(0, 0, &f) < 0){
+        return -1;
+    }
+
+    if(argint(1,&off)<0){
+        return -1;
+    }
+
+    if(argint(2,&whence)<0){
+        return -1;
+    }
+
+    if(whence==SEEK_SET){
+        final_off = off;
+    }
+    
+    else if(whence==SEEK_CUR){
+        final_off = f->off + off;
+    }
+
+    else if(whence==SEEK_END){
+        final_off = f->ip->size + off;
+    }
+
+    else{
+        return -1;
+    }
+    
+    f->off = final_off;
+    return f->off;
+
+}
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
